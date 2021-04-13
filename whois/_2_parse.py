@@ -1,5 +1,5 @@
 import re
-from .exceptions import FailedParsingWhoisOutput
+from .exceptions import FailedParsingWhoisOutput, DomainNotFound
 from . import tld_regexpr
 
 TLD_RE = {}
@@ -30,8 +30,28 @@ def get_tld_re(tld):
 [get_tld_re(tld) for tld in dir(tld_regexpr) if tld[0] != '_']
 
 
+def check_domain(whois_str):
+    unfounds = [
+        "DOMAIN NOT FOUND",
+        "Domain Status: No Object Found",
+        "Domain Status: Not Found",
+        "No Data Found",
+        "No entries found for the selected source",
+        "No found",
+        "No match for domain",
+        "NOT FOUND",
+        "The requested domain was not found",
+        "This domain name has not been registered"
+    ]
+    for unfind in unfound:
+        if whois_str.find(unfind) > -1:
+            return False
+    return True
+
 def do_parse(whois_str, tld):
     r = {}
+    if not check_domain(whois_str):
+        raise DomainNotFound()
 
     if whois_str.count('\n') < 5:
         s = whois_str.strip().lower()
